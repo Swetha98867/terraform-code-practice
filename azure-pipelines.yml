@@ -15,46 +15,53 @@ pr:
       - terraform-vm/*
 
 variables:
-- group: terraform-vm-vars
+  - group: terraform-vm-vars
 
-- name: terraformVersion
-  value: '1.9.8'
+  - name: terraformVersion
+    value: '1.9.8'
 
 stages:
-- stage: TerraformPlan
-  displayName: 'Terraform Plan'
-  jobs:
-  - job: Plan
-    displayName: 'Terraform Init Validate Plan'
-    pool:
-      vmImage: 'ubuntu-latest'
+  - stage: TerraformPlan
+    displayName: 'Terraform Plan'
 
-    steps:
-    - checkout: self
+    jobs:
+      - job: Plan
+        displayName: 'Terraform Init Validate Plan'
 
-    - task: TerraformInstaller@1
-      displayName: 'Install Terraform'
-      inputs:
-        terraformVersion: '$(terraformVersion)'
+        pool:
+          vmImage: 'ubuntu-latest'
 
-    - task: AzureCLI@2
-      displayName: 'Terraform Init Validate Plan'
-      inputs:
-        azureSubscription: 'ado-terraform'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        workingDirectory: '$(Build.SourcesDirectory)/terraform-vm'
-        inlineScript: |
-          set -e
+        steps:
+          - checkout: self
 
-          echo "Terraform version:"
-          terraform version
+          - task: TerraformInstaller@1
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: '$(terraformVersion)'
 
-          echo "Initializing Terraform..."
-          terraform init
+          - task: AzureCLI@2
+            displayName: 'Terraform Init Validate Plan'
+            inputs:
+              azureSubscription: 'ado-terraform'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              workingDirectory: '$(Build.SourcesDirectory)/terraform-vm'
+              addSpnToEnvironment: true
+              inlineScript: |
+                set -e
 
-          echo "Validating Terraform..."
-          terraform validate
+                export ARM_CLIENT_ID="$servicePrincipalId"
+                export ARM_CLIENT_SECRET="$servicePrincipalKey"
+                export ARM_TENANT_ID="$tenantId"
 
-          echo "Running Terraform Plan..."
-          terraform plan
+                echo "Terraform version:"
+                terraform version
+
+                echo "Initializing Terraform..."
+                terraform init
+
+                echo "Validating Terraform..."
+                terraform validate
+
+                echo "Running Terraform Plan..."
+                terraform plan
