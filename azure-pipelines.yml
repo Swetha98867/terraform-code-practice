@@ -32,6 +32,7 @@ stages:
           vmImage: 'ubuntu-latest'
 
         steps:
+
           - checkout: self
 
           - task: TerraformInstaller@1
@@ -47,22 +48,42 @@ stages:
               scriptLocation: 'inlineScript'
               workingDirectory: '$(Build.SourcesDirectory)/terraform-vm'
               addSpnToEnvironment: true
+
               inlineScript: |
                 set -e
+
+                echo "======================================"
+                echo "Terraform Version"
+                echo "======================================"
+                terraform version
+
+                echo "======================================"
+                echo "Setting Terraform Azure Authentication"
+                echo "======================================"
 
                 export ARM_CLIENT_ID="$servicePrincipalId"
                 export ARM_CLIENT_SECRET="$servicePrincipalKey"
                 export ARM_TENANT_ID="$tenantId"
                 export ARM_SUBSCRIPTION_ID="$(ARM_SUBSCRIPTION_ID)"
 
-                echo "Terraform version:"
-                terraform version
+                echo "======================================"
+                echo "Terraform Init"
+                echo "======================================"
 
-                echo "Initializing Terraform..."
-                terraform init
+                terraform init -input=false -no-color
 
-                echo "Validating Terraform..."
-                terraform validate
+                echo "======================================"
+                echo "Terraform Validate"
+                echo "======================================"
 
-                echo "Running Terraform Plan..."
-                terraform plan
+                terraform validate -no-color
+
+                echo "======================================"
+                echo "Terraform Plan"
+                echo "======================================"
+
+                terraform plan -input=false -no-color
+
+                echo "======================================"
+                echo "Terraform Plan Completed Successfully"
+                echo "======================================"
