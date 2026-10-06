@@ -57,10 +57,6 @@ stages:
                 echo "======================================"
                 terraform version
 
-                echo "======================================"
-                echo "Setting Terraform Azure Authentication"
-                echo "======================================"
-
                 export ARM_CLIENT_ID="$servicePrincipalId"
                 export ARM_CLIENT_SECRET="$servicePrincipalKey"
                 export ARM_TENANT_ID="$tenantId"
@@ -69,21 +65,26 @@ stages:
                 echo "======================================"
                 echo "Terraform Init"
                 echo "======================================"
-
                 terraform init -input=false -no-color
 
                 echo "======================================"
                 echo "Terraform Validate"
                 echo "======================================"
-
                 terraform validate -no-color
 
                 echo "======================================"
                 echo "Terraform Plan"
                 echo "======================================"
-
                 terraform plan -input=false -no-color
 
                 echo "======================================"
-                echo "Terraform Plan Completed Successfully"
+                echo "Terraform Plan Completed"
                 echo "======================================"
+
+            env:
+              TF_VAR_resource_group_name: $(TF_VAR_resource_group_name)
+              TF_VAR_location: $(TF_VAR_location)
+              TF_VAR_vm_name: $(TF_VAR_vm_name)
+              TF_VAR_vm_size: $(TF_VAR_vm_size)
+              TF_VAR_admin_username: $(TF_VAR_admin_username)
+              TF_VAR_ssh_public_key: $(TF_VAR_ssh_public_key)
