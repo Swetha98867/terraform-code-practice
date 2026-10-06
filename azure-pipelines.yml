@@ -1,0 +1,60 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - terraform-vm/*
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - terraform-vm/*
+
+variables:
+- group: terraform-vm-vars
+
+- name: terraformVersion
+  value: '1.9.8'
+
+stages:
+- stage: TerraformPlan
+  displayName: 'Terraform Plan'
+  jobs:
+  - job: Plan
+    displayName: 'Terraform Init Validate Plan'
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+    - checkout: self
+
+    - task: TerraformInstaller@1
+      displayName: 'Install Terraform'
+      inputs:
+        terraformVersion: '$(terraformVersion)'
+
+    - task: AzureCLI@2
+      displayName: 'Terraform Init Validate Plan'
+      inputs:
+        azureSubscription: 'ado-terraform'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        workingDirectory: '$(Build.SourcesDirectory)/terraform-vm'
+        inlineScript: |
+          set -e
+
+          echo "Terraform version:"
+          terraform version
+
+          echo "Initializing Terraform..."
+          terraform init
+
+          echo "Validating Terraform..."
+          terraform validate
+
+          echo "Running Terraform Plan..."
+          terraform plan
