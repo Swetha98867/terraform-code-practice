@@ -6,4 +6,8 @@ terraform.tfstate.*
 id_rsa
 id_ed25519
 id_ed25519.pub
+# Ignore Terraform variable files by default
 terraform.tfvars
+
+# Allow non-secret tfvars for the module exercise
+!tf-module/terraform.tfvars
