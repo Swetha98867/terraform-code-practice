@@ -36,6 +36,13 @@ stages:
       displayName: 'Install Terraform'
       inputs:
         terraformVersion: '$(terraformVersion)'
+    - task: AzureKeyVault@2
+      displayName: 'Get VM password from Key Vault'
+      inputs:
+        azureSubscription: 'ado-terraform'
+        KeyVaultName: 'swetha-tf-kv-2026'
+        SecretsFilter: 'vm-admin-password'
+        RunAsPreJob: false
 
     - task: AzureCLI@2
       displayName: 'Terraform Init Validate Plan'
