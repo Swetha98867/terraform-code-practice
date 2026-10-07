@@ -1,7 +1,7 @@
 trigger: none
   paths:
     include:
-      - terraform-vm/*
+      - tf-module/*
 
 pr:
   branches:
@@ -9,79 +9,60 @@ pr:
       - main
   paths:
     include:
-      - terraform-vm/*
+      - tf-module/*
 
 variables:
-  - group: terraform-vm-vars
-
-  - name: terraformVersion
-    value: '1.9.8'
+  terraformVersion: '1.9.8'
 
 stages:
-  - stage: TerraformPlan
-    displayName: 'Terraform Plan'
+- stage: TerraformPlan
+  displayName: 'Terraform Plan'
 
-    jobs:
-      - job: Plan
-        displayName: 'Terraform Init Validate Plan'
+  jobs:
+  - job: Plan
+    displayName: 'Terraform Init Validate Plan'
 
-        pool:
-          vmImage: 'ubuntu-latest'
+    pool:
+      vmImage: 'ubuntu-latest'
 
-        steps:
+    steps:
 
-          - checkout: self
+    - checkout: self
 
-          - task: TerraformInstaller@1
-            displayName: 'Install Terraform'
-            inputs:
-              terraformVersion: '$(terraformVersion)'
+    - task: TerraformInstaller@1
+      displayName: 'Install Terraform'
+      inputs:
+        terraformVersion: '$(terraformVersion)'
+    - task: AzureKeyVault@2
+      displayName: 'Get VM password from Key Vault'
+      inputs:
+        azureSubscription: 'ado-terraform'
+        KeyVaultName: 'swetha-tf-kv-2026'
+        SecretsFilter: 'vm-admin-password'
+        RunAsPreJob: false
 
-          - task: AzureCLI@2
-            displayName: 'Terraform Init Validate Plan'
-            inputs:
-              azureSubscription: 'ado-terraform'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              workingDirectory: '$(Build.SourcesDirectory)/terraform-vm'
-              addSpnToEnvironment: true
+    - task: AzureCLI@2
+      displayName: 'Terraform Init Validate Plan'
+      inputs:
+        azureSubscription: 'ado-terraform'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        workingDirectory: '$(Build.SourcesDirectory)/tf-module'
+        addSpnToEnvironment: true
+        inlineScript: |
+          set -e
 
-              inlineScript: |
-                set -e
+          export ARM_CLIENT_ID="$servicePrincipalId"
+          export ARM_CLIENT_SECRET="$servicePrincipalKey"
+          export ARM_TENANT_ID="$tenantId"
+          export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
 
-                echo "======================================"
-                echo "Terraform Version"
-                echo "======================================"
-                terraform version
+          echo "Terraform Azure authentication configured"
+          echo "Subscription ID: $ARM_SUBSCRIPTION_ID"
 
-                export ARM_CLIENT_ID="$servicePrincipalId"
-                export ARM_CLIENT_SECRET="$servicePrincipalKey"
-                export ARM_TENANT_ID="$tenantId"
-                export ARM_SUBSCRIPTION_ID="$(ARM_SUBSCRIPTION_ID)"
+          terraform init -input=false -no-color
+          terraform validate -no-color
+          terraform plan -input=false -no-color
 
-                echo "======================================"
-                echo "Terraform Init"
-                echo "======================================"
-                terraform init -input=false -no-color
-
-                echo "======================================"
-                echo "Terraform Validate"
-                echo "======================================"
-                terraform validate -no-color
-
-                echo "======================================"
-                echo "Terraform Plan"
-                echo "======================================"
-                terraform plan -input=false -no-color
-
-                echo "======================================"
-                echo "Terraform Plan Completed"
-                echo "======================================"
-
-            env:
-              TF_VAR_resource_group_name: $(TF_VAR_resource_group_name)
-              TF_VAR_location: $(TF_VAR_location)
-              TF_VAR_vm_name: $(TF_VAR_vm_name)
-              TF_VAR_vm_size: $(TF_VAR_vm_size)
-              TF_VAR_admin_username: $(TF_VAR_admin_username)
-              TF_VAR_ssh_public_key: $(TF_VAR_ssh_public_key)
+      env:
+          TF_VAR_admin_password: $(vm-admin-password)
