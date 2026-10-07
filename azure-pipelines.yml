@@ -40,7 +40,7 @@ stages:
     - task: AzureCLI@2
       displayName: 'Terraform Init Validate Plan'
       inputs:
-        azureSubscription: 'sc-terraform-azure'
+        azureSubscription: 'ado-terraform'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         workingDirectory: '$(Build.SourcesDirectory)/tf-module'
