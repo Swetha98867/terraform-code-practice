@@ -51,8 +51,7 @@ stages:
           export ARM_CLIENT_ID="$servicePrincipalId"
           export ARM_CLIENT_SECRET="$servicePrincipalKey"
           export ARM_TENANT_ID="$tenantId"
-          export ARM_SUBSCRIPTION_ID="$(ARM_SUBSCRIPTION_ID)"
-
+          export ARM_SUBSCRIPTION_ID="$subscriptionId"
           terraform init -input=false -no-color
           terraform validate -no-color
           terraform plan -input=false -no-color
