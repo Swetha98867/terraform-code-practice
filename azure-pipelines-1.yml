@@ -1,0 +1,59 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tf-module/*
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tf-module/*
+
+variables:
+  terraformVersion: '1.9.8'
+
+stages:
+- stage: TerraformPlan
+  displayName: 'Terraform Plan'
+
+  jobs:
+  - job: Plan
+    displayName: 'Terraform Init Validate Plan'
+
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+
+    - checkout: self
+
+    - task: TerraformInstaller@1
+      displayName: 'Install Terraform'
+      inputs:
+        terraformVersion: '$(terraformVersion)'
+
+    - task: AzureCLI@2
+      displayName: 'Terraform Init Validate Plan'
+      inputs:
+        azureSubscription: 'sc-terraform-azure'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        workingDirectory: '$(Build.SourcesDirectory)/tf-module'
+        addSpnToEnvironment: true
+
+        inlineScript: |
+          set -e
+
+          export ARM_CLIENT_ID="$servicePrincipalId"
+          export ARM_CLIENT_SECRET="$servicePrincipalKey"
+          export ARM_TENANT_ID="$tenantId"
+          export ARM_SUBSCRIPTION_ID="$(ARM_SUBSCRIPTION_ID)"
+
+          terraform init -input=false -no-color
+          terraform validate -no-color
+          terraform plan -input=false -no-color
